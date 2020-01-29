@@ -1,3 +1,21 @@
+Version 0.0.1
+* [Samples] Added the ability to connect with token in a dxf_events_sample
+* Added the ability to override the type of data the application subscribes to
+  - Added EventSubscriptionFlag enum with possible values:
+    - `Default` that used for default dubscription behaviour
+      - line A
+        - line B
+          - line C
+          - line D
+        - line E
+        - line F
+      - line G
+      - line H
+    - `ForceTicker` that used to force subscription to ticker data
+    - `ForceStream` that used to force subscription to stream data
+    - `ForceHistory` that used to force subscription to history data
+  - Added the new `NativeSubscription` constructors and `NativeConnection.CreateSubscription` methods with additional parameter `eventSubscriptionFlags`.
+
 Version 5.9.0
 * [Samples] Added the ability to connect with token in a dxf_events_sample
 * Added the ability to override the type of data the application subscribes to
@@ -13,7 +31,7 @@ Version 5.9.0
     - 'STREAM' or 'stream' to force subscription to stream data
     - 'HISTORY' or 'history' to force subscription to history data
 * Added the `Tick` field to non ETH Trades.
-  The `Tick` field Returns Trend indicator – in which direction price is moving. The values are: Up (Tick = 1), Down (Tick = 2), and Undefined (Tick = 0).
+  The `Tick` field Returns Trend indicator ï¿½ in which direction price is moving. The values are: Up (Tick = 1), Down (Tick = 2), and Undefined (Tick = 0).
   The `Tick` field should be used if `IDxTradeBase.TickDirection` is `Undefined`
 * Fixed the `Direction` enum.
   Now `Down` = 1 and `ZeroDown` = 2

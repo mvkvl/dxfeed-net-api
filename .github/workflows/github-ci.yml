@@ -14,7 +14,7 @@ env:
   WINDOWS_BUILD_TEMPLATE: dxfeed-net-api-#VERSION#
   WIN_SRC_DIR: "C:\\dxfeed-net-api"
   RELEASE_PREFIX: "dxFeed .Net API "
-  C_API_REPO: "https://github.com/dxfeed/dxfeed-c-api.git"
+  C_API_REPO: "https://github.com/mvkvl/dxfeed-c-api.git"
 
 jobs:
 
@@ -45,82 +45,72 @@ jobs:
 
 
 # --------------------------- BUILD WINDOWS LIBRARY [ VS2015 ]
-  build_windows:
-    runs-on: windows-latest
-    name: build windows
-    steps:
-
-      - uses: actions/checkout@master
-
-      - name: Set env
-        run: |
-          echo "::set-env name=RELEASE_VERSION::$("$Env:GITHUB_REF".Substring(10))"
-          echo "::set-env name=RELEASE_VERSION_TRUNCATED::$("$Env:GITHUB_REF".Substring(10) -replace '[a-zA-Z-]', '')"
-          echo "::set-env name=ARTIFACT::$(echo $Env:WINDOWS_ARTIFACT_TEMPLATE | %{$_ -replace '#VERSION#', $("$Env:GITHUB_REF".Substring(10)) })"
-          echo "::set-env name=WB_ARTIFACT::$(echo $Env:WINDOWS_BUILD_TEMPLATE | %{$_ -replace '#VERSION#', $("$Env:GITHUB_REF".Substring(10) -replace '[a-zA-Z-]', '') })"
-          echo "::set-env name=C_API_REPO::$(echo $Env:C_API_REPO)"
-
-      - name: Check env
-        run: |
-          echo "RELEASE           : ${{ env.RELEASE_VERSION }}"
-          echo "RELEASE_TRUNCATED : ${{ env.RELEASE_VERSION_TRUNCATED }}"
-          echo "ARTIFACT          : ${{ env.ARTIFACT }}"
-          echo "WB_ARTIFACT       : ${{ env.WB_ARTIFACT }}"
-          echo "C_API_REPO        : ${{ env.C_API_REPO }}"
-
-#      - name: Check directory
+#  build_windows:
+#    runs-on: windows-latest
+#    name: build windows
+#    steps:
+#
+#      - uses: actions/checkout@master
+#
+#      - name: Set env
 #        run: |
-#          echo "-------------------------------------------------------------------------------------------------------"
-#          pwd
-#          echo "-------------------------------------------------------------------------------------------------------"
+#          echo "::set-env name=RELEASE_VERSION::$("$Env:GITHUB_REF".Substring(10))"
+#          echo "::set-env name=RELEASE_VERSION_TRUNCATED::$("$Env:GITHUB_REF".Substring(10) -replace '[a-zA-Z-]', '')"
+#          echo "::set-env name=ARTIFACT::$(echo $Env:WINDOWS_ARTIFACT_TEMPLATE | %{$_ -replace '#VERSION#', $("$Env:GITHUB_REF".Substring(10)) })"
+#          echo "::set-env name=WB_ARTIFACT::$(echo $Env:WINDOWS_BUILD_TEMPLATE | %{$_ -replace '#VERSION#', $("$Env:GITHUB_REF".Substring(10) -replace '[a-zA-Z-]', '') })"
+#          echo "::set-env name=C_API_REPO::$(echo $Env:C_API_REPO)"
+#
+#      - name: Check env
+#        run: |
+#          echo "RELEASE           : ${{ env.RELEASE_VERSION }}"
+#          echo "RELEASE_TRUNCATED : ${{ env.RELEASE_VERSION_TRUNCATED }}"
+#          echo "ARTIFACT          : ${{ env.ARTIFACT }}"
+#          echo "WB_ARTIFACT       : ${{ env.WB_ARTIFACT }}"
+#          echo "C_API_REPO        : ${{ env.C_API_REPO }}"
+#
+#      - name: Get dxfeed-c-api source code
+#        run: |
+#          git clone ${{ env.C_API_REPO }}
+#      - name: Checkout dxfeed-c-api current release tag
+#        run: |
+#          cd dxfeed-c-api
+#          git checkout tags/${{ env.RELEASE_VERSION }} -b ${{ env.RELEASE_VERSION }}
+#      - name: Make artifacts directory
+#        run: |
+#          mkdir artifact
+#      - name: List working directory
+#        run: |
 #          ls
-#          echo "-------------------------------------------------------------------------------------------------------"
+#      - name: Free disk space for build image
+#        run: |
+#          docker rm $(docker ps -aq)
+#          docker image rm $(docker image ls -q)
+#      - name: Pull build image
+#        run: |
+#          docker pull ${{ env.WIN_BUILDER_IMAGE }}
+#      - name: Build windows (TLS)
+#        run: |
+#          echo "building windows dxfeed-net-api ( + dxfeed-c-api ) library"
+#          docker run -v "${pwd}:${{ env.WIN_SRC_DIR }}" -e SRCDIR="${{ env.WIN_SRC_DIR }}" -e FLAGS=".\dxfeed-c-api no-test" -e RELEASE=${{ env.RELEASE_VERSION_TRUNCATED }} ${{ env.WIN_BUILDER_IMAGE }}
+#      - name: List files
+#        run: |
 #          ls -recurse
-
-      - name: Get dxfeed-c-api source code
-        run: |
-          git clone ${{ env.C_API_REPO }}
-      - name: Checkout dxfeed-c-api current release tag
-        run: |
-          cd dxfeed-c-api
-          git checkout tags/${{ env.RELEASE_VERSION }} -b ${{ env.RELEASE_VERSION }}
-      - name: Make artifacts directory
-        run: |
-          mkdir artifact
-      - name: List working directory
-        run: |
-          ls
-      - name: Free disk space for build image
-        run: |
-          docker rm $(docker ps -aq)
-          docker image rm $(docker image ls -q)
-      - name: Pull build image
-        run: |
-          docker pull ${{ env.WIN_BUILDER_IMAGE }}
-      - name: Build windows (TLS)
-        run: |
-          echo "building windows dxfeed-net-api ( + dxfeed-c-api ) library"
-          docker run -v "${pwd}:${{ env.WIN_SRC_DIR }}" -e SRCDIR="${{ env.WIN_SRC_DIR }}" -e FLAGS=".\dxfeed-c-api no-test" -e RELEASE=${{ env.RELEASE_VERSION_TRUNCATED }} ${{ env.WIN_BUILDER_IMAGE }}
-      - name: List files
-        run: |
-          ls -recurse
-      - name: Copy build artifact (TLS)
-        run: |
-          cp dxf_master\bin\${{ env.WB_ARTIFACT }}.zip artifact\${{ env.ARTIFACT }}.zip
-          ls artifact\
-#          D:\a\dxfeed-net-api\dxfeed-net-api\dxf_master\bin
-#          D:\a\dxfeed-net-api\dxfeed-net-api
-
-      - name: Upload build artifact (TLS)
-        uses: actions/upload-artifact@v1
-        with:
-          name: ${{ env.ARTIFACT }}.zip
-          path: artifact/${{ env.ARTIFACT }}.zip
+#      - name: Copy build artifact (TLS)
+#        run: |
+#          cp dxf_master\bin\${{ env.WB_ARTIFACT }}.zip artifact\${{ env.ARTIFACT }}.zip
+#          ls artifact\
+#
+#      - name: Upload build artifact (TLS)
+#        uses: actions/upload-artifact@v1
+#        with:
+#          name: ${{ env.ARTIFACT }}.zip
+#          path: artifact/${{ env.ARTIFACT }}.zip
 
   publish_release:
     runs-on: ubuntu-latest
     name: publish release
-    needs: [build_docs, build_windows]
+#    needs: [build_docs, build_windows]
+    needs: [build_docs]
     steps:
 
       - uses: actions/checkout@master
@@ -143,11 +133,22 @@ jobs:
           name: ${{ env.DOC_ARTIFACT }}
           path: downloads/
 
-      - name: Download windows artifact
-        uses: actions/download-artifact@v1
+#      - name: Download windows artifact
+#        uses: actions/download-artifact@v1
+#        with:
+#          name: ${{ env.WINDOWS_ARTIFACT }}
+#          path: downloads/
+
+      - name: Get release notes
+        uses: ./.github/actions/notes
+        id: notes
         with:
-          name: ${{ env.WINDOWS_ARTIFACT }}
-          path: downloads/
+          file: ReleaseNotes.txt
+
+      - name: Print release notes
+        run: |
+          echo "=== Release notes ============="
+          echo '${{ steps.notes.outputs.data }}'
 
       - name: Publish release
         uses: ./.github/actions/publish
@@ -155,6 +156,7 @@ jobs:
           args: downloads/
           draft_regex: '[0-9]+.[0-9]+.[0-9]+-[a-zA-Z]+'
           prerelease_regex: '[a-zA-Z]+-[0-9]+.[0-9]+.[0-9]+'
+          notes: '${{ steps.notes.outputs.data }}'
         env:
           RELEASE_PREFIX: ${{ env.RELEASE_PREFIX }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
